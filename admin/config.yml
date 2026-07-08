@@ -11,23 +11,27 @@ collections:
     label: "المواد الدراسية"
     folder: "data/subjects"
     create: true
-    slug: "{{college}}-{{dept}}-{{title}}"
+    slug: "{{college}}-{{dept}}-{{level}}-{{term}}-{{title}}"
     fields:
       - { label: "اسم الكلية", name: "college", widget: "select", options: ["كلية الهندسة", "كلية الطب", "كلية الحاسبات", "كلية التجارة"] }
       - { label: "التخصص الدراسي", name: "dept", widget: "string" }
+      - { label: "المستوى الدراسي", name: "level", widget: "select", options: ["مستوى أول", "مستوى ثاني", "مستوى ثالث", "مستوى رابع", "مستوى خامس"] }
+      - { label: "الفصل الدراسي", name: "term", widget: "select", options: ["الفصل الأول", "الفصل الثاني"] }
       - { label: "اسم المادة", name: "title", widget: "string" }
       
       - label: "الملازم والسلايدات"
         name: "materials"
         widget: "list"
+        required: false
         fields:
           - { label: "اسم الملزمة", name: "name", widget: "string" }
-          - { label: "رابط الملف (جوجل درايف أو رفع مباشر)", name: "url", widget: "string" }
+          - { label: "رابط الملف", name: "url", widget: "string" }
           - { label: "وصف مختصر", name: "desc", widget: "text", required: false }
 
       - label: "الكتب والمراجع"
         name: "references"
         widget: "list"
+        required: false
         fields:
           - { label: "اسم الكتاب", name: "name", widget: "string" }
           - { label: "رابط الكتاب", name: "url", widget: "string" }
@@ -36,8 +40,8 @@ collections:
       - label: "روابط الكورسات المهمة"
         name: "courses"
         widget: "list"
+        required: false
         fields:
           - { label: "اسم الكورس", name: "name", widget: "string" }
           - { label: "رابط الكورس", name: "url", widget: "string" }
           - { label: "وصف الكورس", name: "desc", widget: "text", required: false }
-          

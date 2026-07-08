@@ -1,1 +1,43 @@
+backend:
+  name: github
+  repo: student-assist/University-Portal
+  branch: main
 
+media_folder: "uploads"
+public_folder: "/uploads"
+
+collections:
+  - name: "subjects"
+    label: "المواد الدراسية"
+    folder: "data/subjects"
+    create: true
+    slug: "{{college}}-{{dept}}-{{title}}"
+    fields:
+      - { label: "اسم الكلية", name: "college", widget: "select", options: ["كلية الهندسة", "كلية الطب", "كلية الحاسبات", "كلية التجارة"] }
+      - { label: "التخصص الدراسي", name: "dept", widget: "string" }
+      - { label: "اسم المادة", name: "title", widget: "string" }
+      
+      - label: "الملازم والسلايدات"
+        name: "materials"
+        widget: "list"
+        fields:
+          - { label: "اسم الملزمة", name: "name", widget: "string" }
+          - { label: "رابط الملف (جوجل درايف أو رفع مباشر)", name: "url", widget: "string" }
+          - { label: "وصف مختصر", name: "desc", widget: "text", required: false }
+
+      - label: "الكتب والمراجع"
+        name: "references"
+        widget: "list"
+        fields:
+          - { label: "اسم الكتاب", name: "name", widget: "string" }
+          - { label: "رابط الكتاب", name: "url", widget: "string" }
+          - { label: "وصف مختصر", name: "desc", widget: "text", required: false }
+
+      - label: "روابط الكورسات المهمة"
+        name: "courses"
+        widget: "list"
+        fields:
+          - { label: "اسم الكورس", name: "name", widget: "string" }
+          - { label: "رابط الكورس", name: "url", widget: "string" }
+          - { label: "وصف الكورس", name: "desc", widget: "text", required: false }
+          

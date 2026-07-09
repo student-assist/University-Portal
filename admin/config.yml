@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: student-assist/University-Portal
+  repo: student-assist/university-portal
   branch: main
 
 student-assist.github.io

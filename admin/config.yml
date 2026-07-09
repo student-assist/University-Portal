@@ -3,7 +3,7 @@ backend:
   repo: student-assist/University-Portal
   branch: main
 
-student-assist.github.io
+publish_mode: editorial_workflow
 media_folder: "uploads"
 public_folder: "/uploads"
 

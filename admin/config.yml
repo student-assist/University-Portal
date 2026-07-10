@@ -3,7 +3,7 @@ backend:
   repo: student-assist/University-Portal
   branch: main
   base_url: https://university-auth.shakersaadan.workers.dev
-  auth_endpoint: auth
+  auth_endpoint: /auth
 
 publish_mode: editorial_workflow
 media_folder: "uploads"

@@ -3,7 +3,7 @@ backend:
   repo: student-assist/University-Portal
   branch: main
   base_url: https://vauth.vercel.app
-  auth_endpoint: /api/auth?client_id=Ov23liVAgr2xCwddQg0X&client_secret=2195402efbabf1f61f69279f5ec429564cc3f952
+  auth_endpoint: /api/auth
 
 publish_mode: editorial_workflow
 media_folder: "uploads"

@@ -1,11 +1,357 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>لوحة التحكم | بوابة مساعد الدراسات الجامعية</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم بوابة الجامعة المخصصة</title>
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <style>
+    :root {
+      --primary-color: #2ea44f;
+      --bg-color: #f6f8fa;
+      --border-color: #d0d7de;
+      --text-color: #24292f;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    h1, h2 { border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--border-color);
+      background: #f6f8fa;
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .tab-btn.active {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input[type="text"], select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    .btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-danger { background-color: #cf222e; }
+    .repeater-box {
+      border: 1px dashed var(--border-color);
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #fafafa;
+      border-radius: 6px;
+      position: relative;
+    }
+    .remove-item {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: #cf222e;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .status-msg { padding: 10px; margin-top: 15px; border-radius: 6px; display: none; }
+    .success { background: #dafbe1; color: #1a7f37; border: 1px solid #a6e9b3; }
+    .error { background: #ffebe9; color: #cf222e; border: 1px solid #ffc1c0; }
+    #login-section { text-align: center; padding: 50px 0; }
+  </style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+
+<div class="container">
+  <!-- قسم تسجيل الدخول الذكي والسريع في حال فقدان التوكن -->
+  <div id="login-section">
+    <h2>🔐 تسجيل الدخول للوحة التحكم المخصصة</h2>
+    <p>يتم التوثيق الآمن والربط المباشر مع مستودع GitHub بدون نوافذ منبثقة.</p>
+    <button class="btn" onclick="startAuth()">تسجيل الدخول عبر GitHub</button>
+  </div>
+
+  <!-- واجهة الإدارة الفعلية المبنيه على الـ YAML -->
+  <div id="dashboard-section" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 id="repo-title">📂 إدارة محتوى بوابة الجامعة</h1>
+      <button class="btn btn-danger" onclick="logout()">تسجيل الخروج</button>
+    </div>
+
+    <!-- التبويبات للتنقل بين المجموعات المعرفة في الكود (Structure & Subjects) -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('structure')">⚙️ إدارة الكليات والتخصصات</button>
+      <button class="tab-btn" onclick="switchTab('subjects')">📚 إضافة وتعديل المواد الدراسية</button>
+    </div>
+
+    <div id="status" class="status-msg"></div>
+
+    <!-- 1. نموذج إدارة الكليات والتخصصات -->
+    <div id="form-structure" class="form-content">
+      <h2>إضافة / تحديث كلية</h2>
+      <form id="js-form-structure" onsubmit="saveData(event, 'structure')">
+        <div class="form-group">
+          <label>اسم الكلية:</label>
+          <input type="text" id="struct-college" required placeholder="مثال: كلية الهندسة والبترول">
+        </div>
+        <div class="form-group">
+          <label>الأقسام والتخصصات التابعة لها:</label>
+          <div id="depts-container"></div>
+          <button type="button" class="btn" style="background:#0969da; margin-top:5px;" onclick="addDeptField()">➕ إضافة تخصص دراسي</button>
+        </div>
+        <button type="submit" class="btn">💾 حفظ الكلية والتخصصات في GitHub</button>
+      </form>
+    </div>
+
+    <!-- 2. نموذج إضافة وتعديل المواد الدراسية -->
+    <div id="form-subjects" class="form-content" style="display: none;">
+      <h2>إضافة مادة دراسية جديدة ومراجعها</h2>
+      <form id="js-form-subjects" onsubmit="saveData(event, 'subjects')">
+        <div class="form-group">
+          <label>اسم الكلية المعنية:</label>
+          <input type="text" id="sub-college" required placeholder="مثال: كلية الحاسبات">
+        </div>
+        <div class="form-group">
+          <label>التخصص الدراسي / القسم:</label>
+          <input type="text" id="sub-dept" required placeholder="مثال: تقنية معلومات">
+        </div>
+        <div class="flex-row" style="display:flex; gap:15px;">
+          <div class="form-group" style="flex:1;">
+            <label>المستوى الدراسي:</label>
+            <select id="sub-level">
+              <option>مستوى أول</option><option>مستوى ثاني</option><option>مستوى ثالث</option><option>مستوى رابع</option><option>مستوى خامس</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>الفصل الدراسي:</label>
+            <select id="sub-term">
+              <option>الفصل الأول</option><option>الفصل الثاني</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>اسم المادة الدراسيّة:</label>
+          <input type="text" id="sub-title" required>
+        </div>
+
+        <!-- القوائم الديناميكية للملازم، المراجع، والكورسات -->
+        <h3 style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">📂 الملازم والسلايدات</h3>
+        <div id="materials-container"></div>
+        <button type="button" class="btn" style="background:#0969da;" onclick="addRepeaterField('materials')">➕ إضافة ملزمة</button>
+
+        <h3 style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">📚 الكتب والمراجع</h3>
+        <div id="references-container"></div>
+        <button type="button" class="btn" style="background:#0969da;" onclick="addRepeaterField('references')">➕ إضافة كتاب مرجعي</button>
+
+        <h3 style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">🔗 روابط الكورسات المهمة</h3>
+        <div id="courses-container"></div>
+        <button type="button" class="btn" style="background:#0969da; margin-bottom:20px;" onclick="addRepeaterField('courses')">➕ إضافة كورس</button>
+
+        <br>
+        <button type="submit" class="btn">💾 حفظ المادة وكافة بياناتها في GitHub</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // الإعدادات المأخوذة مباشرة من ملف الـ YAML والـ Worker الخاص بك
+  const CONFIG = {
+    repo: "student-assist/University-Portal",
+    branch: "main",
+    authUrl: "https://university-auth.shakersaadan.workers.dev/v1/auth"
+  };
+
+  let token = "";
+
+  // فحص حالة الجلسة عند فتح الصفحة
+  window.onload = function() {
+    // التقاط التوكن المخزن عبر الـ الذاكرة المحلية (سواء من الـ Worker أو الجلسات السابقة)
+    const storedUser = localStorage.getItem("netlify-cms-user");
+    if (storedUser) {
+      const userData = JSON.parse(storedUser);
+      token = userData.token;
+    }
+
+    if (token) {
+      document.getElementById("login-section").style.display = "none";
+      document.getElementById("dashboard-section").style.display = "block";
+      // تهيئة بعض الحقول الافتراضية الفارغة لتسهيل العمل
+      addDeptField();
+      addRepeaterField('materials');
+    }
+  };
+
+  function startAuth() {
+    window.location.href = CONFIG.authUrl;
+  }
+
+  function logout() {
+    localStorage.removeItem("netlify-cms-user");
+    window.location.reload();
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.form-content').forEach(f => f.style.display = 'none');
+    event.target.classList.add('active');
+    document.getElementById(`form-${tabName}`).style.display = 'block';
+  }
+
+  function showStatus(msg, isSuccess) {
+    const statusDiv = document.getElementById("status");
+    statusDiv.innerText = msg;
+    statusDiv.className = `status-msg ${isSuccess ? 'success' : 'error'}`;
+    statusDiv.style.display = "block";
+    window.scrollTo(0,0);
+  }
+
+  // ميكانيكية توليد حقول ديناميكية للأقسام (List Widget)
+  function addDeptField() {
+    const container = document.getElementById("depts-container");
+    const div = document.createElement("div");
+    div.className = "repeater-box";
+    div.innerHTML = `
+      <span class="remove-item" onclick="this.parentElement.remove()">❌ حذف</span>
+      <input type="text" class="dept-name-input" required placeholder="اسم التخصص الدراسي (مثل: هندسة برمجيات)">
+    `;
+    container.appendChild(div);
+  }
+
+  // ميكانيكية توليد حقول ديناميكية للملازم والمراجع والكورسات بحسب حقول الـ YAML
+  function addRepeaterField(type) {
+    const container = document.getElementById(`${type}-container`);
+    const div = document.createElement("div");
+    div.className = "repeater-box";
+    div.innerHTML = `
+      <span class="remove-item" onclick="this.parentElement.remove()">❌ حذف</span>
+      <div class="form-group"><input type="text" class="${type}-name" required placeholder="الاسم / العنوان"></div>
+      <div class="form-group"><input type="text" class="${type}-url" required placeholder="رابط الملف أو الكورس (URL)"></div>
+      <div class="form-group"><textarea class="${type}-desc" rows="2" placeholder="وصف مختصر (اختياري)"></textarea></div>
+    `;
+    container.appendChild(div);
+  }
+
+  // دالة تجميع البيانات ومعالجتها ورفعها إلى مستودع GitHub مباشرة بدون وسطاء
+  async function saveData(event, type) {
+    event.preventDefault();
+    showStatus("جاري تحضير البيانات ورفعها إلى GitHub...", true);
+
+    let payload = {};
+    let folderPath = "";
+    let fileName = "";
+
+    if (type === 'structure') {
+      const college = document.getElementById("struct-college").value.trim();
+      const deptsElements = document.querySelectorAll(".dept-name-input");
+      let deptsList = [];
+      deptsElements.forEach(el => deptsList.push({ dept_name: el.value.trim() }));
+
+      payload = { college: college, depts: deptsList };
+      folderPath = "data/structure";
+      fileName = `${college.replace(/[\s\/]/g, '_')}.yml`; // تعويض المسافات لتفادي مشاكل الروابط
+    } else if (type === 'subjects') {
+      const college = document.getElementById("sub-college").value.trim();
+      const dept = document.getElementById("sub-dept").value.trim();
+      const level = document.getElementById("sub-level").value;
+      const term = document.getElementById("sub-term").value;
+      const title = document.getElementById("sub-title").value.trim();
+
+      // تجميع القوائم
+      let getRepeaterItems = (pfx) => {
+        let arr = [];
+        const names = document.querySelectorAll(`.${pfx}-name`);
+        const urls = document.querySelectorAll(`.${pfx}-url`);
+        const descs = document.querySelectorAll(`.${pfx}-desc`);
+        names.forEach((el, index) => {
+          arr.push({ name: el.value.trim(), url: urls[index].value.trim(), desc: descs[index].value.trim() });
+        });
+        return arr;
+      };
+
+      payload = {
+        college: college,
+        dept: dept,
+        level: level,
+        term: term,
+        title: title,
+        materials: getRepeaterItems('materials'),
+        references: getRepeaterItems('references'),
+        courses: getRepeaterItems('courses')
+      };
+      
+      folderPath = "data/subjects";
+      // صياغة الـ slug بناءً على محددات الـ config.yml: {{college}}-{{dept}}-{{level}}-{{term}}-{{title}}
+      const cleanSlug = `${college}-${dept}-${level}-${term}-${title}`.replace(/[\s\/]/g, '_');
+      fileName = `${cleanSlug}.yml`;
+    }
+
+    // تحويل البيانات البرمجية إلى نص YAML نظيف تماماً ومطابق للبيانات المطلوبة
+    const yamlContent = jsyaml.dump(payload);
+    const fullPath = `${folderPath}/${fileName}`;
+
+    // إرسال البيانات فوراً إلى الـ API الرسمي لـ GitHub لتخزين الملف بفرعك الأساسي main
+    try {
+      // 1. محاولة فحص إذا كان الملف موجود مسبقاً لجلب الـ sha الخاص به (لتحديثه بدلاً من إحداث تعارض)
+      let sha = "";
+      const checkRes = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/${fullPath}?ref=${CONFIG.branch}`, {
+        headers: { "Authorization": `token ${token}` }
+      });
+      if (checkRes.status === 200) {
+        const fileData = await checkRes.json();
+        sha = fileData.sha;
+      }
+
+      // 2. أمر الحفظ أو التحديث القاطع للبيانات
+      const commitRes = await fetch(`https://api.github.com/repos/${CONFIG.repo}/contents/${fullPath}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `تحديث مخصص للمحتوى: ${fileName} عبر لوحة التحكم المخصصة`,
+          content: btoa(unescape(encodeURIComponent(yamlContent))), // تشفير المحتوى بـ Base64 ليدعمه السيرفر باللغة العربية
+          branch: CONFIG.branch,
+          sha: sha !== "" ? sha : undefined
+        })
+      });
+
+      if (commitRes.status === 200 || commitRes.status === 201) {
+        showStatus(`🎉 تم حفظ وتحديث الملف بنجاح داخل مستودعك بمسار: ${fullPath}`, true);
+      } else {
+        const errData = await commitRes.json();
+        showStatus(`❌ فشل الحفظ في GitHub: ${errData.message}`, false);
+      }
+    } catch (err) {
+      showStatus(`❌ حدث خطأ غير متوقع أثناء الاتصال بـ GitHub: ${err.message}`, false);
+    }
+  }
+</script>
 </body>
 </html>
+

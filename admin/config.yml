@@ -2,7 +2,7 @@ backend:
   name: github
   repo: student-assist/University-Portal
   branch: main
-  base_url: https://vauth.vercel.app
+  base_url: https://decap-cms-oauth-provider.vercel.app
   auth_endpoint: /api/auth
 
 publish_mode: editorial_workflow

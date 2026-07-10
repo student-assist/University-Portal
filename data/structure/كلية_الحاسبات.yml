@@ -1,0 +1,6 @@
+college: كلية الحاسبات
+depts:
+  - dept_name: أمن سبراني
+  - dept_name: تقنية معلومات
+  - dept_name: جرافكس
+  - dept_name: ذكاء صناعي
